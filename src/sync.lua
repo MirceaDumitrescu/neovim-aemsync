@@ -60,6 +60,8 @@ function M.setup(opts)
     end, {desc = "Sync current file to AEM"})
 end
 
+M.setup()
+
 -- Return the module table
 return M
 
