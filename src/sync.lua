@@ -10,6 +10,7 @@ local default_config = {
     password = "admin", -- Default password
 }
 
+
 local function read_file(path)
     local file = io.open(path, "rb") -- "rb" mode for binary read, which is safer for any file content
     if not file then return nil end
@@ -19,7 +20,8 @@ local function read_file(path)
 end
 
 -- Define the sync_to_aem function within the module
-function M.sync_to_aem(file_path)
+function M.sync_to_aem(file_path, user_config)
+
   -- Implementation of syncing the file to AEM
   local file_content = read_file(file_path)
     if not file_content then
@@ -27,7 +29,9 @@ function M.sync_to_aem(file_path)
         return
     end
 
-    local url = "http://your_aem_server.com/path/to/api"
+    local config = user_config or default_config
+
+    local url = config.serverUrl .. "/crx/packmgr/service/.json/?cmd=upload"
     local response_body = {}
 
     local res, status = http.request({
@@ -35,7 +39,8 @@ function M.sync_to_aem(file_path)
         method = "POST",
         headers = {
             ["Content-Type"] = "application/xml",
-            -- Add additional headers like authentication here
+            ["Content-Length"] = tostring(#file_content),
+            ["Authorization"] = "Basic " .. vim.fn.base64encode(config.username .. ":" .. config.password)
         },
         source = ltn12.source.string(file_content),
         sink = ltn12.sink.table(response_body),
@@ -48,15 +53,17 @@ function M.sync_to_aem(file_path)
     end
 end
 
--- Define the setup function that users can call to initialize the plugin
-function M.setup(opts)
-    -- Merge user-provided options with the default configuration
-    config = vim.tbl_deep_extend("force", {}, default_config, opts or {})
+function  M.print_config()
+    print(vim.inspect(config))
+end
 
+-- Define the setup function that users can call to initialize the plugin
+function M.setup(default_config)
+    log.trace("Setting up AEM Sync plugin", default_config)
     -- Define the :AemSync command
     vim.api.nvim_create_user_command('AemSync', function()
         local file_path = vim.fn.expand("%:p") -- Get the current file path
-        M.sync_to_aem(file_path)
+        M.sync_to_aem(file_path,  default_config)
     end, {desc = "Sync current file to AEM"})
 end
 
