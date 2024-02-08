@@ -20,7 +20,7 @@ local function read_file(path)
 end
 
 -- Define the sync_to_aem function within the module
-function M.sync_to_aem(file_path, user_config)
+function M.sync_to_aem(file_path)
 
   -- Implementation of syncing the file to AEM
   local file_content = read_file(file_path)
@@ -29,9 +29,8 @@ function M.sync_to_aem(file_path, user_config)
         return
     end
 
-    local config = user_config or default_config
 
-    local url = config.serverUrl .. "/crx/packmgr/service/.json/?cmd=upload"
+    local url = default_config.serverUrl .. "/crx/packmgr/service/.json/?cmd=upload"
     local response_body = {}
 
     local res, status = http.request({
@@ -40,7 +39,7 @@ function M.sync_to_aem(file_path, user_config)
         headers = {
             ["Content-Type"] = "application/xml",
             ["Content-Length"] = tostring(#file_content),
-            ["Authorization"] = "Basic " .. vim.fn.base64encode(config.username .. ":" .. config.password)
+            ["Authorization"] = "Basic " .. vim.fn.base64encode(default_config.username .. ":" .. default_config.password)
         },
         source = ltn12.source.string(file_content),
         sink = ltn12.sink.table(response_body),
@@ -53,20 +52,14 @@ function M.sync_to_aem(file_path, user_config)
     end
 end
 
-function  M.print_config()
-    print(vim.inspect(config))
-end
-
-function M.setup(user_config)
-    user_config = user_config or {}
-    local config = vim.tbl_deep_extend("force", {}, default_config, user_config)
-
+function M.setup()
     vim.api.nvim_create_user_command('AemSync', function()
         local file_path = vim.fn.expand("%:p") -- Get the current file path
-        M.sync_to_aem(file_path, config)
+        M.sync_to_aem(file_path)
     end, {desc = "Sync current file to AEM"})
 end
 
+M.setup()
 
 -- Return the module table
 return M
