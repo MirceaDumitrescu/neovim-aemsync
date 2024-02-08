@@ -10,6 +10,8 @@ local default_config = {
     password = "admin", -- Default password
 }
 
+print("Registering AemSync", default_config.serverUrl, default_config.username, default_config.password)
+
 
 local function read_file(path)
     local file = io.open(path, "rb") -- "rb" mode for binary read, which is safer for any file content
@@ -53,6 +55,7 @@ function M.sync_to_aem(file_path)
 end
 
 vim.api.nvim_create_user_command('AemSync', function()
+    print('Registering AemSync')
         local file_path = vim.fn.expand("%:p") -- Get the current file path
             M.sync_to_aem(file_path)
         end, {desc = "Sync current file to AEM"})
