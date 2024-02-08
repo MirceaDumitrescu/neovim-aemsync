@@ -57,17 +57,16 @@ function  M.print_config()
     print(vim.inspect(config))
 end
 
--- Define the setup function that users can call to initialize the plugin
-function M.setup(default_config)
-    log.trace("Setting up AEM Sync plugin", default_config)
-    -- Define the :AemSync command
+function M.setup(user_config)
+    user_config = user_config or {}
+    local config = vim.tbl_deep_extend("force", {}, default_config, user_config)
+
     vim.api.nvim_create_user_command('AemSync', function()
         local file_path = vim.fn.expand("%:p") -- Get the current file path
-        M.sync_to_aem(file_path,  default_config)
+        M.sync_to_aem(file_path, config)
     end, {desc = "Sync current file to AEM"})
 end
 
-M.setup()
 
 -- Return the module table
 return M
