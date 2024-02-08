@@ -4,24 +4,18 @@ local ltn12 = require("ltn12")
 -- Define a local table to represent your module
 local M = {}
 
+local default_config = {
+    serverUrl = "http://localhost:4502", -- Default server URL
+    username = "admin", -- Default username
+    password = "admin", -- Default password
+}
+
 local function read_file(path)
     local file = io.open(path, "rb") -- "rb" mode for binary read, which is safer for any file content
     if not file then return nil end
     local content = file:read("*all")
     file:close()
     return content
-end
-
-
--- Define the setup_autocommands function within the module
-local function setup_autocommands()
-  vim.api.nvim_create_autocmd("BufWritePost", {
-    pattern = "*.xml",
-    callback = function()
-      local file_path = vim.fn.expand("%:p") -- Get the full path of the saved file
-      M.sync_to_aem(file_path) -- Assuming sync_to_aem is another function within your module
-    end,
-  })
 end
 
 -- Define the sync_to_aem function within the module
@@ -54,10 +48,16 @@ function M.sync_to_aem(file_path)
     end
 end
 
--- Define a setup function that users can call to initialize the plugin
+-- Define the setup function that users can call to initialize the plugin
 function M.setup(opts)
-  -- Here you can process opts and configure your plugin
-  setup_autocommands() -- Setup autocommands as part of the setup process
+    -- Merge user-provided options with the default configuration
+    config = vim.tbl_deep_extend("force", {}, default_config, opts or {})
+
+    -- Define the :AemSync command
+    vim.api.nvim_create_user_command('AemSync', function()
+        local file_path = vim.fn.expand("%:p") -- Get the current file path
+        M.sync_to_aem(file_path)
+    end, {desc = "Sync current file to AEM"})
 end
 
 -- Return the module table
