@@ -54,11 +54,14 @@ function M.sync_to_aem(file_path)
     end
 end
 
-vim.api.nvim_create_user_command('AemSync', function()
-    print('Registering AemSync')
-        local file_path = vim.fn.expand("%:p") -- Get the current file path
-            M.sync_to_aem(file_path)
-        end, {desc = "Sync current file to AEM"})
+function M.setup(config)
+    default_config = vim.tbl_extend("force", default_config, config)
+    vim.api.nvim_create_user_command('AemSync', function()
+        print('Registering AemSync')
+            local file_path = vim.fn.expand("%:p") -- Get the current file path
+                M.sync_to_aem(file_path)
+            end, {desc = "Sync current file to AEM"})
+end
 
 
 -- Return the module table
